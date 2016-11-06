@@ -16,3 +16,5 @@
     use linux kernel config kretprobe to print kernel and driver code consume time.
 ### perf-tools-master
     some tools for debug linux kernel, kprobe, ftrace, and so on
+### dump_mem.c 
+    dump a process memory in user space by /proc/pid/mem
