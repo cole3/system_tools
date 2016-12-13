@@ -1,0 +1,49 @@
+#!/bin/bash
+
+VIM_TAG_PREFIX=.tag
+
+echo "Usage:"
+echo -e "\t -f\t\t\t: build tags in current direntory"
+echo -e "\t -b conf\t\t: build by config file"
+echo -e "\t -u\t\t\t: update tags"
+echo -e "\t -r\t\t\t: remove all tags"
+
+
+if [ "$1" == "-f" ]; then
+    mkdir -P $VIM_TAG_PREFIX
+    find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -type f > $VIM_TAG_PREFIX/cscope.files 2> /dev/null
+elif [ "$1" == "-b" ]; then
+    if [ -e $2 ]; then
+        mkdir -p $VIM_TAG_PREFIX
+        rm -rf $VIM_TAG_PREFIX/cscope.* tags
+        cat $2 | while read LINE
+        do
+            #echo $LINE
+            if [ -d $LINE ]; then
+                echo "find $LINE $FIND_ARGS"
+                find $LINE -name "*.h" -o -name "*.c" -o -name "*.cpp" -type f >> $VIM_TAG_PREFIX/cscope.files 2> /dev/null
+            elif [ -f $LINE ]; then
+                echo $LINE >> $VIM_TAG_PREFIX/cscope.files 2> /dev/null
+            fi
+        done
+    fi
+elif [ "$1" == "-u" ]; then
+    mkdir -p $VIM_TAG_PREFIX
+    rm -rf $VIM_TAG_PREFIX/cscope.* $VIM_TAG_PREFIX/ctags $VIM_TAG_PREFIX/tags
+elif [ "$1" == "-r" ]; then
+    rm -rf $VIM_TAG_PREFIX/cscope.* $VIM_TAG_PREFIX/ctags $VIM_TAG_PREFIX/tags
+    exit 0
+else
+    exit 0
+fi
+
+echo "start build cscope..."
+time cscope -bkq -i $VIM_TAG_PREFIX/cscope.files 2> /dev/null
+mv cscope.* $VIM_TAG_PREFIX/
+echo "end build cscope"
+
+echo "start build ctags..."
+time ctags -L $VIM_TAG_PREFIX/cscope.files -f $VIM_TAG_PREFIX/tags 2> /dev/null
+echo "end build ctags"
+
+exit 0
