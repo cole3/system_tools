@@ -23,7 +23,7 @@ void dump_stack(void)
     printf("backtrace() returned %d addresses\n", nptrs);
 
     /* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
-       would produce similar output to the following: */
+    would produce similar output to the following: */
 
     strings = backtrace_symbols(buffer, nptrs);
     if (strings == NULL) {
@@ -66,8 +66,7 @@ http://gcc.gnu.org/onlinedocs/gcc/Return-Address.html
 #define RED           "\033[0;32;31m"
 #define GREEN         "\033[0;32;32m"
 
-struct stack_frame
-{
+struct stack_frame {
     struct stack_frame *next;
     unsigned int *sp;
     unsigned int *lr;
@@ -85,8 +84,7 @@ static void print_comm(UINT32 pid)
 
     sprintf(name, "/proc/%d/comm", gettid());
     file = fopen(name, "r");
-    if (!file)
-    {
+    if (!file) {
         Printf(RED"[BT]fopen %s error!\n"NONE, name);
         return;
     }
@@ -103,27 +101,22 @@ static BOOL get_stack_range(UINT32 *pu4Start, UINT32 *pu4End)
     FILE *file = NULL;
     UINT32 start_addr = 0, end_addr = 0, tid = 0, tid_tmp = 0;
 
-    if (!pu4Start || !pu4End)
-    {
+    if (!pu4Start || !pu4End) {
         return FALSE;
     }
     tid = gettid();
     sprintf(name, "/proc/%d/maps", tid);
     file = fopen(name, "r");
-    if (!file)
-    {
+    if (!file) {
         Printf(RED"[BT]fopen %s error!\n"NONE, name);
         return FALSE;
     }
 
-    while (fgets(buf, sizeof(buf) - 1, file))
-    {
-        if (sscanf(buf, "%x-%x %*s %*s %*s %*s [stack:%d]\n", &start_addr, &end_addr, &tid_tmp) != 3)
-        {
+    while (fgets(buf, sizeof(buf) - 1, file)) {
+        if (sscanf(buf, "%x-%x %*s %*s %*s %*s [stack:%d]\n", &start_addr, &end_addr, &tid_tmp) != 3) {
             continue;
         }
-        if (tid == tid_tmp)
-        {
+        if (tid == tid_tmp) {
             *pu4Start = start_addr;
             *pu4End = end_addr;
             Printf(GREEN"[BT]stack(%d) start_addr = 0x%x, end_addr = 0x%x\n"NONE, tid, start_addr, end_addr);
@@ -140,10 +133,8 @@ static char *get_last_string(char *buf)
 {
     char *s = buf;
 
-    while (*buf != '\n' && *buf != '\0')
-    {
-        if (*buf == ' ' || *buf == '\t')
-        {
+    while (*buf != '\n' && *buf != '\0') {
+        if (*buf == ' ' || *buf == '\t') {
             s = buf + 1;
         }
         buf++;
@@ -161,17 +152,14 @@ static void print_map(UINT32 u4addr)
 
     sprintf(name, "/proc/%d/maps", gettid());
     file = fopen(name, "r");
-    if (!file)
-    {
+    if (!file) {
         Printf(RED"[BT]fopen %s error!\n"NONE, name);
         return;
     }
 
-    while (fgets(buf, sizeof(buf) - 1, file))
-    {
+    while (fgets(buf, sizeof(buf) - 1, file)) {
         sscanf(buf, "%x-%x%*s\n", &start_addr, &end_addr);
-        if (start_addr <= u4addr && u4addr < end_addr)
-        {
+        if (start_addr <= u4addr && u4addr < end_addr) {
             Printf(GREEN"[BT][<%p>] (+0x%x) %s\n"NONE, u4addr, u4addr-start_addr, buf);
             Printf(GREEN"[BT]%s\n"NONE, get_last_string(buf));
 
@@ -188,13 +176,10 @@ static void print_map(UINT32 u4addr)
 {
     Dl_info info;
 
-    if (dladdr((VOID *)u4addr, &info))
-    {
+    if (dladdr((VOID *)u4addr, &info)) {
         Printf(GREEN"[BT]***[<%08x>]%s(@0x%x):%s+0x%x\n"NONE, u4addr, info.dli_fname,
-                info.dli_fbase, info.dli_sname, u4addr - (UINT32)info.dli_saddr);
-    }
-    else
-    {
+               info.dli_fbase, info.dli_sname, u4addr - (UINT32)info.dli_saddr);
+    } else {
         Printf(GREEN"[BT]***[<%08x>]???\n"NONE, u4addr);
     }
 }
@@ -207,8 +192,7 @@ static void backtrace(void)
     UINT32 u4StackStartAddr = 0, u4StackEndAddr = 0xFFFFFFFF;
     int cnt = 0;
 
-    if (!(_u4MwIfDbgFlags & 0x1000))
-    {
+    if (!(_u4MwIfDbgFlags & 0x1000)) {
         return;
     }
 
@@ -218,7 +202,7 @@ static void backtrace(void)
     asm("mov %[var], r14" : [var] "=r" (lr));
     asm("mov %[var], r15" : [var] "=r" (pc));
     Printf(GREEN"[BT]fp=%08x ip=%08x sp=%08x lr=%08x pc=%08x\n"NONE,
-            fp, ip, sp, lr, pc);
+           fp, ip, sp, lr, pc);
     Printf(GREEN"[BT]pid %d, tid %d\n"NONE, getpid(), gettid());
     print_comm(gettid());
 
@@ -226,13 +210,11 @@ static void backtrace(void)
     pCurFrame = (struct stack_frame *)fp - 1;
 
 #define MAX_STACK_FRAME_NUM   20
-    while (cnt++ < MAX_STACK_FRAME_NUM)
-    {
+    while (cnt++ < MAX_STACK_FRAME_NUM) {
         if ((unsigned int)pCurFrame < (unsigned int)&cnt ||
-                (unsigned int)pCurFrame < u4StackStartAddr ||
-                (unsigned int)pCurFrame >= u4StackEndAddr ||
-                (unsigned int)pCurFrame >= 0xBF000000)
-        {
+            (unsigned int)pCurFrame < u4StackStartAddr ||
+            (unsigned int)pCurFrame >= u4StackEndAddr ||
+            (unsigned int)pCurFrame >= 0xBF000000) {
             break;
         }
 
@@ -242,9 +224,10 @@ static void backtrace(void)
 }
 
 #define BACKTRACE()  do { \
-    Printf(GREEN"[BT]Current Func:%s\n"NONE, __FUNCTION__); \
-    backtrace(); \
+Printf(GREEN"[BT]Current Func:%s\n"NONE, __FUNCTION__); \
+backtrace(); \
 } while (0)
 
 #endif
-)
+
+
