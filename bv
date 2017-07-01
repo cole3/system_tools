@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VIM_TAG_PREFIX=.tag
+VIM_TAG_PREFIX=.
 
 echo "Usage:"
 echo -e "\t -f\t\t\t: build tags in current direntory"
@@ -10,7 +10,7 @@ echo -e "\t -r\t\t\t: remove all tags"
 
 
 if [ "$1" == "-f" ]; then
-    mkdir -P $VIM_TAG_PREFIX
+    mkdir -p $VIM_TAG_PREFIX
     find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -type f > $VIM_TAG_PREFIX/cscope.files 2> /dev/null
 elif [ "$1" == "-b" ]; then
     if [ -e $2 ]; then
@@ -45,5 +45,13 @@ echo "end build cscope"
 echo "start build ctags..."
 time ctags -L $VIM_TAG_PREFIX/cscope.files -f $VIM_TAG_PREFIX/tags 2> /dev/null
 echo "end build ctags"
+
+echo "start build filenametags..."
+echo -e "!_TAG_FILE_SORTED\t2\t/2=foldcase/" > $VIM_TAG_PREFIX/filenametags
+time cat $VIM_TAG_PREFIX/cscope.files | while read LINE
+do
+    echo -e "${LINE##*/}\t$LINE\t1" >> $VIM_TAG_PREFIX/filenametags
+done
+echo "end build filenametags"
 
 exit 0
